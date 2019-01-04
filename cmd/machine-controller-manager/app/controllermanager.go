@@ -35,6 +35,7 @@ import (
 	machinescheme "github.com/gardener/machine-controller-manager/pkg/client/clientset/versioned/scheme"
 	machineinformers "github.com/gardener/machine-controller-manager/pkg/client/informers/externalversions"
 	machinecontroller "github.com/gardener/machine-controller-manager/pkg/controller"
+	machineconfig "github.com/gardener/machine-controller-manager/pkg/options"
 	corecontroller "github.com/gardener/machine-controller-manager/pkg/util/controller"
 	coreinformers "k8s.io/client-go/informers"
 	kubescheme "k8s.io/client-go/kubernetes/scheme"
@@ -356,6 +357,12 @@ func startHTTP(s *options.MCMServer) {
 		if s.EnableContentionProfiling {
 			goruntime.SetBlockProfileRate(1)
 		}
+	}
+	// setup /configz endpoint
+	if cz, err := configz.New(controllerManagerAgentName); err == nil {
+		cz.Set((*cz).(machineconfig.MachineControllerManagerConfiguration))
+	} else {
+		glog.Errorf("unable to register configz: %c", err)
 	}
 	configz.InstallHandler(mux)
 	mux.Handle("/metrics", prometheus.Handler())
